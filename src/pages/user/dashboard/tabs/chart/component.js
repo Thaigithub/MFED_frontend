@@ -5,50 +5,53 @@ export default function ChartComponent({ data, width, height }){
     const svgRef = useRef(null);
 
     useEffect(() => {
+        if (!data) return;
         d3.select(svgRef.current).selectAll('*').remove();
-
-        const temperatureData = data
+        
         const svg = d3.select(svgRef.current);
+        const realData = data.real;
+        const forecastingData = data.forecast;
+
         const margin = { top: 20, right: 30, bottom: 30, left: 40 };
-        width = width - margin.left - margin.right;
-        height = height - margin.top - margin.bottom;
+        const chartwidth = width - margin.left - margin.right;
+        const chartheight = height - margin.top - margin.bottom;
     
-        const x = d3
-        .scaleTime()
-        .domain(d3.extent(temperatureData, (d) => d.time))
-        .range([0, width]);
+        const x = d3.scaleTime().domain(d3.extent([...realData, ...forecastingData], d => d.time)).range([0, chartwidth]);
+        const y = d3.scaleLinear().domain([0, d3.max([...realData, ...forecastingData], d => d.data)]).nice().range([chartheight, 0]);
+        
+        const lineReal = d3.line()
+        .x(d => xScale(d.time))
+        .y(d => yScale(d.data))
+        .curve(d3.curveMonotoneX);
+
+        const lineForecast = d3.line()
+        .x(d => xScale(d.time))
+        .y(d => yScale(d.data))
+        .curve(d3.curveMonotoneX);
+
+        const chart = svg.append('g')
+        .attr('transform', `translate(${margin.left},${margin.top})`);
     
-        const y = d3
-        .scaleLinear()
-        .domain([0, d3.max(temperatureData, (d) => d.data)])
-        .nice()
-        .range([height, 0]);
-    
-        const xAxis = d3.axisBottom(x);
-        const yAxis = d3.axisLeft(y);
-    
-        svg
-        .append('g')
-        .attr('transform', `translate(${margin.left},${height + margin.top})`)
-        .call(xAxis);
-    
-        svg
-        .append('g')
-        .attr('transform', `translate(${margin.left}, ${margin.top})`)
-        .call(yAxis);
-    
-        const line = d3
-        .line()
-        .x((d) => x(d.time))
-        .y((d) => y(d.data));
-    
-        svg
-        .append('path')
-        .datum(temperatureData)
+        chart.append('g')
+        .attr('transform', `translate(0,${chartheight})`)
+        .call(d3.axisBottom(xScale));
+
+        chart.append('g')
+        .call(d3.axisLeft(yScale));
+
+        chart.append('path')
+        .datum(realData)
         .attr('fill', 'none')
         .attr('stroke', 'blue')
-        .attr('stroke-width', 2)
-        .attr('d', line);
+        .attr('stroke-width', 4)
+        .attr('d', lineReal);
+
+        chart.append('path')
+        .datum(forecastingData)
+        .attr('fill', 'none')
+        .attr('stroke', 'red')
+        .attr('stroke-width', 4)
+        .attr('d', lineForecast);
     }, [data, width, height]);
 
     return<svg ref={svgRef} width={width} height={height}/>
