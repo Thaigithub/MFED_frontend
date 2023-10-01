@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from 'react'
 import ChartComponent from './component'
 import axios from 'axios'
+import api from '../../../../../assets/api'
 import 'react-datepicker/dist/react-datepicker.css';
 import DatePicker from 'react-datepicker'
 export default function Chart(){
@@ -15,20 +16,37 @@ export default function Chart(){
         width: 800,
         height: 600,
       });
-    const [data, setData] = useState([])
+    const [data, setData] = useState({
+        'real':[],
+        'forecast':[]
+    })
     const chartcontainerRef = useRef(null)
     useEffect(()=>{
-        const request = {
-            from: time.from.toISOString(),
-            to: time.to.toISOString(),
-            type: typechart,
-        }
-        axios.get('localhost:5000/api/data'+typechart)
+        axios.get(api.BACKEND_API+`data/query`, {
+            headers: {
+                Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
+            },
+            data:{
+                from: time.from.toISOString(),
+                to: time.to.toISOString(),
+                type: typechart,
+            }
+        })
         .then(response => {
-            setData(response.data)
+            const newdata = response.data
+            newdata.real = newdata.real.map(item =>({
+                time: new Date(item.time),
+                data: item.data
+            }))
+            newdata.forecast = newdata.forecast.map(item =>({
+                time: new Date(item.time),
+                data: item.data
+            }))
+            newdata.forecast.unshift(newdata.real[newdata.real.length-1])
+            setData(newdata)
         })
         .catch(error=>console.error(error))
-    })
+    },[time, typechart]);
     function handleChangeTimeTo(date){
         setTime({
             from: time.from,
@@ -89,8 +107,8 @@ export default function Chart(){
                     </div>
                 </div>
                 <div className='flex w-full items-center justify-center'>
-                    <select value={typechart}  onChange={(e) => setTypeChart(e.target.value)} className='border-2 border-[#3c8dbc] rounded-lg p-2'>
-                        <option value="temperature">Nhiệt độ</option>
+                    <select value={typechart}  onChange={(e) => setTypeChart(e.target.value)} className='outline-none border-2 border-[#3c8dbc] rounded-lg p-2'>
+                        <option value="temperature" >Nhiệt độ</option>
                         <option value="salinity">Độ mặn</option>
                         <option value="ph">Độ pH</option>
                         <option value="turbidity">Độ đục</option>
