@@ -53,6 +53,52 @@ export default function ChartComponent({ data, width, height }){
         .attr('stroke', 'red')
         .attr('stroke-width', 4)
         .attr('d', lineForecast);
+
+        const dataPointContainer = chart.append('g')
+        .attr('class', 'data-points');
+
+        dataPointContainer.selectAll('.data-point')
+        .data([...realData, ...forecastData], d => d.data) 
+        .enter().append('circle')
+        .attr('class', 'data-point')
+        .attr('cx', d => xScale(d.time))
+        .attr('cy', d => yScale(d.data))
+        .attr('r', 5)
+        .style('opacity', 0);
+
+        chart.on('mouseover', () => {
+        dataPointContainer.selectAll('.data-point')
+            .style('opacity', 1);
+        })
+        .on('mouseout', () => {
+        dataPointContainer.selectAll('.data-point')
+            .style('opacity', 0);
+        });
+
+        dataPointContainer.selectAll('.tooltip')
+        .data([...realData, ...forecastData])
+        .enter().append('text')
+        .attr('class', 'tooltip')
+        .attr('x', d => xScale(d.time))
+        .attr('y', d => yScale(d.data) - 10)
+        .style('opacity', 0);
+
+    // Show/hide tooltips on data point hover
+        dataPointContainer.selectAll('.data-point')
+        .on('mouseover', function (event, d) {
+            // Show tooltip on hover
+            const tooltip = d3.select(this.parentNode).select('.tooltip');
+            tooltip.style('opacity', 1);
+            tooltip.text(`data: ${d.data}`)
+            .attr('x', xScale(d.time))
+            .attr('y', yScale(d.temperature) - 10);
+        })
+        .on('mouseout', function () {
+            // Hide tooltip when the mouse moves out
+            const tooltip = d3.select(this.parentNode).select('.tooltip');
+            tooltip.style('opacity', 0);
+        })
+        
     }, [data, width, height]);
 
     return<svg ref={svgRef} width={width} height={height}/>
