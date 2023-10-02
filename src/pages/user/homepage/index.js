@@ -18,7 +18,7 @@ export default function Homepage(){
     function handleSubmit(values) {
         axios.post(api.BACKEND_API+`auth/login`, values)
         .then(res=>{
-            sessionStorage.setItem('accessToken', res.accessToken)
+            sessionStorage.setItem('accessToken', res.data.accessToken)
             history('/dashboard')
         })
         .catch(err=>{console.log(err)})

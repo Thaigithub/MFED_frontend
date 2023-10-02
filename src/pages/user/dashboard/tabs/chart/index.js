@@ -13,8 +13,8 @@ export default function Chart(){
         to: endTime,
     })
     const [parentDimensions, setParentDimensions] = useState({
-        width: 800,
-        height: 600,
+        width: 0,
+        height: 0,
       });
     const [data, setData] = useState({
         'real':[],
@@ -22,15 +22,18 @@ export default function Chart(){
     })
     const chartcontainerRef = useRef(null)
     useEffect(()=>{
-        axios.get(api.BACKEND_API+`data/query`, {
+        const request = {
+            from: time.from.toISOString(),
+            to: time.to.toISOString(),
+            type: typechart,
+        }
+        console.log(request)
+        axios.get(api.BACKEND_API+`data/query`,
+        {
             headers: {
                 Authorization: `Bearer ${sessionStorage.getItem('accessToken')}`
             },
-            data:{
-                from: time.from.toISOString(),
-                to: time.to.toISOString(),
-                type: typechart,
-            }
+            params: request
         })
         .then(response => {
             const newdata = response.data
